@@ -23,30 +23,31 @@ export const writes = {
 
   createPool: (name: string, supportedTemplatesJson: string) =>
     write("create_pool", [name, supportedTemplatesJson]),
-  /** `amount` is real GEN (in wei, the chain's smallest unit) attached as transaction value. */
-  depositPoolCapital: (poolId: string, amount: number | bigint) =>
-    write("deposit_pool_capital", [poolId], BigInt(amount)),
-  withdrawAvailableCapital: (poolId: string, amount: number) =>
-    write("withdraw_available_capital", [poolId, amount]),
+  /** `amountWei` is real GEN (wei, the chain's smallest unit), attached as transaction value via gl.message.value. */
+  depositPoolCapital: (poolId: string, amountWei: bigint) =>
+    write("deposit_pool_capital", [poolId], amountWei),
+  /** `amountWei` is a wei-denominated calldata arg, not a payable value -- withdrawals are outflows, not deposits. */
+  withdrawAvailableCapital: (poolId: string, amountWei: bigint) =>
+    write("withdraw_available_capital", [poolId, amountWei]),
   setPoolActive: (poolId: string, active: boolean) =>
     write("set_pool_active", [poolId, active]),
 
-  /** `premium` must exactly match get_policy_quote's premium and is attached as real GEN transaction value (wei). */
+  /** `premiumWei` must exactly match get_policy_quote's premium and is attached as real GEN transaction value (wei). */
   purchasePolicy: (
     poolId: string,
     templateId: string,
     beneficiary: string,
-    maxPayout: number,
+    maxPayoutWei: bigint,
     startAt: number,
     endAt: number,
     passportJson: string,
     triggerJson: string,
-    premium: number | bigint,
+    premiumWei: bigint,
   ) =>
     write(
       "purchase_policy",
-      [poolId, templateId, beneficiary, maxPayout, startAt, endAt, passportJson, triggerJson],
-      BigInt(premium),
+      [poolId, templateId, beneficiary, maxPayoutWei, startAt, endAt, passportJson, triggerJson],
+      premiumWei,
     ),
   activatePolicy: (policyId: string) => write("activate_policy", [policyId]),
   cancelWaitingPolicy: (policyId: string) => write("cancel_waiting_policy", [policyId]),

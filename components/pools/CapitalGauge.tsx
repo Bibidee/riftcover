@@ -1,19 +1,22 @@
-import { formatMinorUnits } from "@/lib/formatting/money";
+import { formatWeiToGen } from "@/lib/formatting/money";
 
 export function CapitalGauge({
   totalCapital,
   reservedCapital,
 }: {
-  totalCapital: number;
-  reservedCapital: number;
+  /** Wei-denominated GEN, as decimal strings from a contract read. */
+  totalCapital: string;
+  reservedCapital: string;
 }) {
-  const pct = totalCapital === 0 ? 0 : Math.min(100, Math.round((reservedCapital / totalCapital) * 100));
+  const total = BigInt(totalCapital);
+  const reserved = BigInt(reservedCapital);
+  const pct = total === 0n ? 0 : Number((reserved * 100n) / total > 100n ? 100n : (reserved * 100n) / total);
   return (
     <div>
       <div className="flex justify-between font-data text-xs uppercase tracking-wide2 text-fog">
         <span className="font-medium text-carbon">Reserved {pct}%</span>
         <span className="font-tabular">
-          {formatMinorUnits(reservedCapital)} / {formatMinorUnits(totalCapital)}
+          {formatWeiToGen(reservedCapital)} / {formatWeiToGen(totalCapital)} GEN
         </span>
       </div>
       <div className="mt-1.5 h-2.5 border border-carbon bg-fog-soft/40">

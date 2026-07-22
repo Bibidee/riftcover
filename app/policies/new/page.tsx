@@ -8,6 +8,7 @@ import { writes } from "@/lib/genlayer/writes";
 import { waitForFinalized, explorerTxUrl } from "@/lib/genlayer/receipts";
 import { TransactionRail } from "@/components/transactions/TransactionRail";
 import { TxLifecycleStatus } from "@/lib/genlayer/receipts";
+import { formatWeiToGen, parseGenToWei } from "@/lib/formatting/money";
 
 export default function PolicyBuilderPage() {
   const [poolId, setPoolId] = useState("");
@@ -21,7 +22,7 @@ export default function PolicyBuilderPage() {
   const [exclusions, setExclusions] = useState<string[]>(["TEMPORARY_MAINTENANCE_ONLY"]);
   const [noticeDays, setNoticeDays] = useState(90);
   const [sources, setSources] = useState<string[]>(["OFFICIAL_ANNOUNCEMENT", "OFFICIAL_DOCUMENTATION"]);
-  const [maxPayout, setMaxPayout] = useState(10000);
+  const [maxPayout, setMaxPayout] = useState("10000");
   const [durationDays, setDurationDays] = useState(180);
   const [beneficiary, setBeneficiary] = useState("");
 
@@ -95,7 +96,8 @@ export default function PolicyBuilderPage() {
       return;
     }
     try {
-      const q = await reads.getPolicyQuote(poolId, templateId, maxPayout, durationDays, 10000);
+      const maxPayoutWei = parseGenToWei(maxPayout);
+      const q = await reads.getPolicyQuote(poolId, templateId, maxPayoutWei, durationDays, 10000);
       setQuote(q);
     } catch (err: any) {
       setErrors([err?.message ?? String(err)]);
@@ -106,17 +108,18 @@ export default function PolicyBuilderPage() {
     if (!quote) return;
     setTxStatus("SIGNING");
     try {
+      const maxPayoutWei = parseGenToWei(maxPayout);
       const now = Math.floor(Date.now() / 1000);
       const hash = await writes.purchasePolicy(
         poolId,
         templateId,
         beneficiary || "",
-        maxPayout,
+        maxPayoutWei,
         now,
         now + durationDays * 86400,
         JSON.stringify(buildPassport()),
         JSON.stringify(buildTrigger()),
-        quote.premium,
+        BigInt(quote.premium),
       );
       setTxHash(hash);
       setTxStatus("SUBMITTED");
@@ -291,11 +294,12 @@ export default function PolicyBuilderPage() {
             onChange={(e) => setTemplateId(e.target.value)}
           />
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             className="field"
-            placeholder="Max payout"
+            placeholder="Max payout (GEN, e.g. 1000.5)"
             value={maxPayout}
-            onChange={(e) => setMaxPayout(Number(e.target.value))}
+            onChange={(e) => setMaxPayout(e.target.value)}
           />
           <input
             type="number"
@@ -341,9 +345,9 @@ export default function PolicyBuilderPage() {
 
       {quote && (
         <div className="border border-carbon p-4 font-data text-sm">
-          <p>Premium: {quote.premium}</p>
-          <p>Required reserve: {quote.required_reserve}</p>
-          <p>Available capacity: {quote.available_capacity}</p>
+          <p>Premium: {formatWeiToGen(quote.premium)} GEN</p>
+          <p>Required reserve: {formatWeiToGen(quote.required_reserve)} GEN</p>
+          <p>Available capacity: {formatWeiToGen(quote.available_capacity)} GEN</p>
           <p>Sufficient capacity: {String(quote.sufficient_capacity)}</p>
         </div>
       )}

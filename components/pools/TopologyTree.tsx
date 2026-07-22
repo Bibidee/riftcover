@@ -1,6 +1,9 @@
+import { formatWeiToGen } from "@/lib/formatting/money";
+
 export interface TopologyGroup {
   category: string;
-  entries: { name: string; reserved: number }[];
+  /** `reserved` is wei-denominated GEN, as a decimal string. */
+  entries: { name: string; reserved: string }[];
 }
 
 /** Portfolio exposure as a topology tree, not a pie chart (per spec). */
@@ -17,7 +20,7 @@ export function TopologyTree({ groups }: { groups: TopologyGroup[] }) {
               <div key={entry.name} className="flex items-center gap-2 px-3 py-2 text-fog">
                 <span className="h-1.5 w-1.5 shrink-0 bg-cobalt" />
                 <span className="flex-1 text-carbon">{entry.name}</span>
-                <span className="font-tabular text-carbon">{entry.reserved.toLocaleString()} reserved</span>
+                <span className="font-tabular text-carbon">{formatWeiToGen(entry.reserved)} GEN reserved</span>
               </div>
             ))}
           </div>

@@ -1,7 +1,7 @@
 import { ClippedPanel } from "@/components/shared/ClippedPanel";
 import { MeasurementLabel } from "@/components/shared/MeasurementLabel";
 import { StatusStamp } from "@/components/shared/StatusStamp";
-import { formatMinorUnits, formatTimestamp } from "@/lib/formatting/money";
+import { formatWeiToGen, formatTimestamp } from "@/lib/formatting/money";
 import { Policy } from "@/lib/genlayer/reads";
 
 /** Policy rendered as a printable technical certificate. */
@@ -19,9 +19,9 @@ export function PolicyInstrument({ policyId, policy }: { policyId: string; polic
         <MeasurementLabel label="Beneficiary" value={policy.beneficiary} />
         <MeasurementLabel label="Pool" value={policy.pool_id} />
         <MeasurementLabel label="Template" value={policy.template_id} />
-        <MeasurementLabel label="Coverage" value={formatMinorUnits(policy.max_payout)} />
-        <MeasurementLabel label="Premium" value={formatMinorUnits(policy.premium)} />
-        <MeasurementLabel label="Reserved capital" value={formatMinorUnits(policy.reserved_capital)} />
+        <MeasurementLabel label="Coverage" value={`${formatWeiToGen(policy.max_payout)} GEN`} />
+        <MeasurementLabel label="Premium" value={`${formatWeiToGen(policy.premium)} GEN`} />
+        <MeasurementLabel label="Reserved capital" value={`${formatWeiToGen(policy.reserved_capital)} GEN`} />
         <MeasurementLabel label="Activation" value={formatTimestamp(policy.start_at)} />
         <MeasurementLabel label="Expiry" value={formatTimestamp(policy.end_at)} />
       </div>

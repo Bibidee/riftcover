@@ -7,15 +7,15 @@ import { writes } from "@/lib/genlayer/writes";
 import { waitForFinalized } from "@/lib/genlayer/receipts";
 import { CapitalGauge } from "@/components/pools/CapitalGauge";
 import { MeasurementLabel } from "@/components/shared/MeasurementLabel";
-import { formatMinorUnits } from "@/lib/formatting/money";
+import { formatWeiToGen, parseGenToWei } from "@/lib/formatting/money";
 
 export default function PoolDetailPage() {
   const { poolId } = useParams<{ poolId: string }>();
   const [pool, setPool] = useState<Pool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [amount, setAmount] = useState(1000);
-  const [withdrawAmount, setWithdrawAmount] = useState(1000);
+  const [amount, setAmount] = useState("1000");
+  const [withdrawAmount, setWithdrawAmount] = useState("1000");
 
   async function refresh() {
     try {
@@ -34,7 +34,9 @@ export default function PoolDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      const hash = await writes.depositPoolCapital(poolId, amount);
+      const amountWei = parseGenToWei(amount);
+      if (amountWei <= 0n) throw new Error("Deposit amount must be greater than zero");
+      const hash = await writes.depositPoolCapital(poolId, amountWei);
       await waitForFinalized(hash);
       await refresh();
     } catch (err: any) {
@@ -48,7 +50,9 @@ export default function PoolDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      const hash = await writes.withdrawAvailableCapital(poolId, withdrawAmount);
+      const amountWei = parseGenToWei(withdrawAmount);
+      if (amountWei <= 0n) throw new Error("Withdraw amount must be greater than zero");
+      const hash = await writes.withdrawAvailableCapital(poolId, amountWei);
       await waitForFinalized(hash);
       await refresh();
     } catch (err: any) {
@@ -72,7 +76,7 @@ export default function PoolDetailPage() {
       <CapitalGauge totalCapital={pool.total_capital} reservedCapital={pool.reserved_capital} />
       <div className="space-y-1">
         <MeasurementLabel label="Owner" value={pool.owner} />
-        <MeasurementLabel label="Paid out" value={formatMinorUnits(pool.paid_out)} />
+        <MeasurementLabel label="Paid out" value={`${formatWeiToGen(pool.paid_out)} GEN`} />
         <MeasurementLabel label="Active" value={String(pool.active)} />
       </div>
 
@@ -81,13 +85,15 @@ export default function PoolDetailPage() {
       )}
 
       <section className="border border-carbon p-4">
-        <h2 className="font-data text-xs uppercase tracking-wider text-fog">Deposit Capital (Real GEN, wei)</h2>
+        <h2 className="font-data text-xs uppercase tracking-wider text-fog">Deposit Capital (real payable GEN)</h2>
         <div className="mt-2 flex gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
+            placeholder="1.25"
             className="field flex-1"
             value={amount}
-            onChange={(e) => setAmount(Number(e.target.value))}
+            onChange={(e) => setAmount(e.target.value)}
           />
           <button
             disabled={busy}
@@ -101,14 +107,16 @@ export default function PoolDetailPage() {
 
       <section className="border border-carbon p-4">
         <h2 className="font-data text-xs uppercase tracking-wider text-fog">
-          Withdraw Available Capital (Real GEN, wei)
+          Withdraw Available Capital (real GEN transfer)
         </h2>
         <div className="mt-2 flex gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
+            placeholder="1.25"
             className="field flex-1"
             value={withdrawAmount}
-            onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+            onChange={(e) => setWithdrawAmount(e.target.value)}
           />
           <button
             disabled={busy}

@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { reads } from "@/lib/genlayer/reads";
 import { TopologyTree, TopologyGroup } from "@/components/pools/TopologyTree";
-import { formatMinorUnits } from "@/lib/formatting/money";
+import { formatWeiToGen } from "@/lib/formatting/money";
 
 export default function UnderwritePage() {
-  const [totals, setTotals] = useState<{ total: number; reserved: number; paid: number } | null>(null);
+  const [totals, setTotals] = useState<{ total: bigint; reserved: bigint; paid: bigint } | null>(null);
   const [groups, setGroups] = useState<TopologyGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,9 +15,9 @@ export default function UnderwritePage() {
       try {
         const poolIds = await reads.listPoolIds();
         const pools = await Promise.all(poolIds.map((id) => reads.getPool(id)));
-        const total = pools.reduce((s, p) => s + p.total_capital, 0);
-        const reserved = pools.reduce((s, p) => s + p.reserved_capital, 0);
-        const paid = pools.reduce((s, p) => s + p.paid_out, 0);
+        const total = pools.reduce((s, p) => s + BigInt(p.total_capital), 0n);
+        const reserved = pools.reduce((s, p) => s + BigInt(p.reserved_capital), 0n);
+        const paid = pools.reduce((s, p) => s + BigInt(p.paid_out), 0n);
         setTotals({ total, reserved, paid });
         setGroups([
           {
@@ -41,15 +41,15 @@ export default function UnderwritePage() {
         <div className="grid grid-cols-1 gap-4 font-data text-sm md:grid-cols-3">
           <div className="border border-carbon p-3">
             <p className="text-xs uppercase text-fog">Total capital</p>
-            <p className="font-tabular text-lg text-carbon">{formatMinorUnits(totals.total)}</p>
+            <p className="font-tabular text-lg text-carbon">{formatWeiToGen(totals.total)} GEN</p>
           </div>
           <div className="border border-carbon p-3">
             <p className="text-xs uppercase text-fog">Reserved capital</p>
-            <p className="font-tabular text-lg text-carbon">{formatMinorUnits(totals.reserved)}</p>
+            <p className="font-tabular text-lg text-carbon">{formatWeiToGen(totals.reserved)} GEN</p>
           </div>
           <div className="border border-carbon p-3">
             <p className="text-xs uppercase text-fog">Paid claims</p>
-            <p className="font-tabular text-lg text-carbon">{formatMinorUnits(totals.paid)}</p>
+            <p className="font-tabular text-lg text-carbon">{formatWeiToGen(totals.paid)} GEN</p>
           </div>
         </div>
       )}

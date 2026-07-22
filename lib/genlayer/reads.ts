@@ -20,9 +20,10 @@ export interface ProtocolConfig {
 export interface Pool {
   owner: string;
   name: string;
-  total_capital: number;
-  reserved_capital: number;
-  paid_out: number;
+  /** Wei-denominated GEN, as a decimal string. Use formatWeiToGen() to display. */
+  total_capital: string;
+  reserved_capital: string;
+  paid_out: string;
   active: boolean;
 }
 
@@ -43,9 +44,10 @@ export interface Policy {
   start_at: number;
   end_at: number;
   waiting_ends_at: number;
-  premium: number;
-  max_payout: number;
-  reserved_capital: number;
+  /** Wei-denominated GEN, as a decimal string. Use formatWeiToGen() to display. */
+  premium: string;
+  max_payout: string;
+  reserved_capital: string;
 }
 
 export interface Claim {
@@ -59,7 +61,8 @@ export interface Claim {
   event_class: string;
   severity: number;
   payout_bps: number;
-  payout_amount: number;
+  /** Wei-denominated GEN, as a decimal string. Use formatWeiToGen() to display. */
+  payout_amount: string;
   challenge_ends_at: number;
   paid: boolean;
 }
@@ -72,9 +75,10 @@ export interface EvidenceItem {
 }
 
 export interface PolicyQuote {
-  premium: number;
-  required_reserve: number;
-  available_capacity: number;
+  /** Wei-denominated GEN, as a decimal string. Use formatWeiToGen() to display. */
+  premium: string;
+  required_reserve: string;
+  available_capacity: string;
   sufficient_capacity: boolean;
 }
 
@@ -91,7 +95,7 @@ export const reads = {
   getPolicyQuote: (
     poolId: string,
     templateId: string,
-    maxPayout: number,
+    maxPayout: bigint,
     durationDays: number,
     riskBandBps: number,
   ) =>

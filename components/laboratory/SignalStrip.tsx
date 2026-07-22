@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { StatusStamp } from "@/components/shared/StatusStamp";
-import { formatMinorUnits } from "@/lib/formatting/money";
+import { formatWeiToGen } from "@/lib/formatting/money";
 
 export interface SignalStripData {
   id: string;
   name: string;
-  coverage: number;
+  /** Wei-denominated GEN, as a decimal string. */
+  coverage: string;
   policies: number;
   state: string;
   lastChecked: string;
@@ -26,7 +27,7 @@ export function SignalStrip({ data, href }: { data: SignalStripData; href: strin
         <StatusStamp status={data.state} />
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-6 gap-y-1 font-data text-xs text-fog">
-        <span>Coverage {formatMinorUnits(data.coverage)}</span>
+        <span>Coverage {formatWeiToGen(data.coverage)} GEN</span>
         <span>Policies {data.policies}</span>
         <span>Last checked {data.lastChecked}</span>
       </div>
