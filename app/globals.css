@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #fbf1ff;
+  }
+  body {
+    @apply bg-bone text-carbon font-body antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    @apply bg-lime text-carbon;
+  }
+  :focus-visible {
+    outline: 2px solid #8b2fe0;
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #fbf1ff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #8b2fe0;
+    border: 2px solid #fbf1ff;
+  }
+}
+
+@layer components {
+  /* Shared button primitives — presentational only, no behavior attached here. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 border-2 px-4 py-2 font-data text-xs
+      font-medium uppercase tracking-wider transition-all duration-150 ease-signal
+      disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn border-carbon bg-cobalt text-paper hover:bg-cobalt-deep hover:border-cobalt-deep
+      active:translate-y-px;
+  }
+  .btn-secondary {
+    @apply btn border-carbon bg-transparent text-carbon hover:bg-carbon hover:text-paper
+      active:translate-y-px;
+  }
+  .btn-accent {
+    @apply btn border-carbon bg-vermilion text-paper hover:bg-carbon active:translate-y-px;
+  }
+  .btn-positive {
+    @apply btn border-carbon bg-lime text-carbon hover:bg-carbon hover:text-lime
+      active:translate-y-px;
+  }
+  .field {
+    @apply w-full border border-fog-soft bg-paper px-3 py-2 font-data text-sm text-carbon
+      outline-none transition-colors duration-150 placeholder:text-fog focus:border-cobalt;
+  }
+  .card {
+    @apply border border-carbon bg-paper transition-shadow duration-150 ease-signal;
+  }
+  .card-interactive {
+    @apply card hover:shadow-[4px_4px_0_0_theme(colors.carbon)];
+  }
+  .tag-chip {
+    @apply border px-2 py-1 font-data text-xs uppercase tracking-wider transition-colors duration-150;
+  }
+}
+
+@layer utilities {
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

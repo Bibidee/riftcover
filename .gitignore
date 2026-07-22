@@ -1,0 +1,30 @@
+# Node
+node_modules/
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+npm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Test/build artifacts
+artifacts/
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor/tooling
+.claude/
+.vscode/
+.idea/
