@@ -8,7 +8,7 @@ expected and is not an error.
 
 ## Already deployed
 
-- **Current contract:** `0x309ac7f09d73bD603eDc55D793829165A1BE7186` — ASCII-clean
+- **Current contract:** `0xc98EECD91d051C2143041F3a1D793D436591C67B` — ASCII-clean
   source, fully-payable (real GEN deposits/premiums/withdrawals/payouts) with
   explicit balance-invariant checks before every transfer, and the honest
   `_now()` (raises `POLICY_ERROR` rather than calling the nonexistent

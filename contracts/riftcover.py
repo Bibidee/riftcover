@@ -8,6 +8,20 @@ import json
 from genlayer import *
 
 # ---------------------------------------------------------------------------
+# EVM receiver interface for real outbound GEN transfers.
+# Matches the accepted pattern used by p2pstake and shipbond: a minimal
+# gl.evm.contract_interface with no declared methods, invoked purely for its
+# emit_transfer(value=...) capability, rather than gl.get_contract_at(...).
+# ---------------------------------------------------------------------------
+
+@gl.evm.contract_interface
+class _Recipient:
+    class View:
+        pass
+    class Write:
+        pass
+
+# ---------------------------------------------------------------------------
 # Constant enumerations (mirrors RiftCover product specification)
 # ---------------------------------------------------------------------------
 
@@ -217,6 +231,21 @@ class RiftCover(gl.Contract):
 
     def _sender(self) -> str:
         return gl.message.sender_address.as_hex
+
+    def _send_gen(self, recipient: str, amount: u256) -> None:
+        # Real GEN outflow, following the accepted p2pstake/shipbond pattern:
+        # _Recipient(Address(recipient)).emit_transfer(value=amount) via a
+        # gl.evm.contract_interface, not gl.get_contract_at(...).emit_transfer(on=...).
+        # Callers must set claimed/paid/refunded ledger flags BEFORE calling this,
+        # so a claim can never be re-submitted for payout even if the surrounding
+        # transaction later fails for unrelated reasons.
+        if not recipient:
+            raise _err("SCHEMA_ERROR", "missing recipient")
+        if amount <= u256(0):
+            raise _err("SCHEMA_ERROR", "transfer amount must be positive")
+        if amount > self.balance:
+            raise _err("EXPECTED", "contract balance is insufficient")
+        _Recipient(Address(recipient)).emit_transfer(value=amount)
 
     def _require_admin(self) -> None:
         if self._sender() != self.admin:
@@ -429,16 +458,13 @@ class RiftCover(gl.Contract):
         available = int(self.pool_total_capital[pool_id]) - int(self.pool_reserved_capital[pool_id])
         if amount > available:
             raise _err("EXPECTED", "withdrawal exceeds available (unreserved) capital")
-        # Backing invariant: the contract's real GEN balance must actually cover
-        # this transfer. Internal ledgers (pool_total_capital) should always imply
-        # this, but this contract holds funds for multiple pools together, so this
-        # is checked explicitly as a hard defense against ledger/balance drift.
-        if u256(amount) > self.balance:
-            raise _err("EXPECTED", "contract balance is insufficient to cover this withdrawal")
+        # Set ledger state BEFORE transferring, so this withdrawal can never be
+        # re-submitted for the same funds even if something downstream fails.
+        # _send_gen independently re-checks self.balance as a hard defense
+        # against ledger/balance drift (this contract holds funds for multiple
+        # pools together).
         self.pool_total_capital[pool_id] -= u256(amount)
-        # Real GEN transfer: send the withdrawn amount back to the pool owner
-        # (already verified as the caller by _require_pool_owner above).
-        gl.get_contract_at(Address(self._sender())).emit_transfer(value=u256(amount), on="finalized")
+        self._send_gen(self._sender(), u256(amount))
 
     @gl.public.write
     def set_pool_active(self, pool_id: str, active: bool) -> None:
@@ -972,12 +998,11 @@ Respond with exactly this JSON schema:
 
         if int(self.pool_reserved_capital[pool_id]) < max_payout:
             raise _err("EXPECTED", "pool does not have sufficient reserved capital")
-        # Backing invariant: the contract's real GEN balance must actually cover
-        # this payout before we touch any ledger state (see withdraw_available_capital
-        # for the same defensive pattern).
-        if u256(payout_amount) > self.balance:
-            raise _err("EXPECTED", "contract balance is insufficient to cover this payout")
+        # _send_gen independently re-checks self.balance before transferring.
 
+        # Set claimed/paid ledger flags BEFORE transferring, matching the
+        # p2pstake/shipbond ordering -- this claim can never be resubmitted for
+        # payout even if the transfer step or anything after it fails.
         self.pool_reserved_capital[pool_id] -= u256(max_payout)
         self.pool_total_capital[pool_id] -= u256(payout_amount)
         self.pool_paid_out[pool_id] += u256(payout_amount)
@@ -987,12 +1012,10 @@ Respond with exactly this JSON schema:
         self.claim_status[claim_id] = "PAYOUT_EXECUTED"
         self.policy_status[policy_id] = "PAID"
 
-        # Real GEN payout to the policy's beneficiary -- this contract must
-        # already hold enough real GEN, since deposit_pool_capital/
-        # purchase_policy are the only ways real value enters it.
+        # Real GEN payout to the policy's beneficiary.
         if payout_amount > 0:
             beneficiary = self.policy_beneficiary[policy_id]
-            gl.get_contract_at(Address(beneficiary)).emit_transfer(value=u256(payout_amount), on="finalized")
+            self._send_gen(beneficiary, u256(payout_amount))
 
     # ------------------------------------------------------------------
     # simulation (non-binding, non-mutating)

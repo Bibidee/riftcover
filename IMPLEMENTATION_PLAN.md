@@ -9,6 +9,39 @@ the project incrementally, milestone by milestone, and reports honestly on what 
 implemented, tested, and verified versus what remains. Nothing here claims a test
 passed that did not run, or a deployment that did not happen.
 
+## 0e. Session 6 -- adopted the p2pstake/shipbond outbound transfer pattern
+
+Outbound GEN transfers previously used
+`gl.get_contract_at(Address(recipient)).emit_transfer(value=u256(amount), on="finalized")`.
+This session replaced that with the accepted pattern used by
+`github.com/ometere123/p2pstake` and `github.com/ometere123/shipbond`: a
+minimal `@gl.evm.contract_interface` receiver stub with empty `View`/`Write`
+classes, invoked as `_Recipient(Address(recipient)).emit_transfer(value=amount)`.
+All outbound transfers now go through one helper, `_send_gen(recipient, amount)`,
+which validates the recipient and amount, re-checks `self.balance`, and then
+calls `_Recipient(...).emit_transfer(value=amount)`. `withdraw_available_capital`
+and `execute_payout` both set their ledger flags (`pool_total_capital`,
+`claim_paid`/`claim_status`/`policy_status`) *before* calling `_send_gen`,
+matching p2pstake/shipbond's ordering, so a transfer failure downstream cannot
+let the same funds be claimed or withdrawn twice.
+
+**RiftCover now uses the same accepted `_Recipient(Address).emit_transfer(value=amount)`
+outflow pattern as p2pstake and shipbond.**
+
+No refund/cancellation transfer flow exists yet (`cancel_waiting_policy` and
+`expire_policy` only release reserved capital back to the pool; they do not
+call `_send_gen`) -- premiums remain non-refundable/earned-immediately, as
+already stated in `docs/ADJUDICATION.md`. If a refundable-premium product
+variant is wanted later, it would call `_send_gen(policy_owner, premium)` from
+those two methods, following the same set-flags-then-transfer ordering.
+
+Re-linted clean (`genvm_linter.GenVMLinter().lint_file(...)` -> `[]`, zero
+findings) and re-run against live StudioNet consensus with `gltest`; see the
+test run log for pass/fail counts, including a new
+`test_withdraw_available_capital_sends_real_value_back` assertion that reads
+the withdrawing account's actual on-chain balance via `client.get_balance()`
+before and after, rather than trusting internal ledger counters alone.
+
 ## 0d. Session 5 -- real integration tests run against StudioNet (gltest)
 
 `tests/integration/test_payability.py` was written and actually run with
@@ -153,7 +186,7 @@ log buffer did not always clear on navigation/force-reload within the same tab.
 
 ## 0a. Live StudioNet deployment
 
-- **Current contract address:** `0x309ac7f09d73bD603eDc55D793829165A1BE7186` — ASCII-clean,
+- **Current contract address:** `0xc98EECD91d051C2143041F3a1D793D436591C67B` — ASCII-clean,
   fully-payable, balance-invariant-checked, honest `_now()` (see section 0d) --
   the exact code verified by `tests/integration/test_payability.py` (8/8 passing).
 - **Superseded contract addresses:**

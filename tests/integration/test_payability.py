@@ -18,7 +18,7 @@ ContractFunction, not the result. Reads need .call(); writes need
 
 import json
 
-from gltest import get_contract_factory, get_accounts
+from gltest import get_contract_factory, get_accounts, get_gl_client
 from gltest.assertions import tx_execution_succeeded
 
 
@@ -105,17 +105,33 @@ def test_deposit_rejects_zero_value():
 
 
 def test_withdraw_available_capital_sends_real_value_back():
-    contract = deploy_riftcover()
+    """
+    Proves real GEN movement, not just ledger accounting: reads the pool
+    owner's actual on-chain balance before and after the withdrawal via
+    client.get_balance(), the same technique used to prove the accepted
+    p2pstake/shipbond transfer pattern works for EOA recipients. The ledger
+    assertion alone (pool["total_capital"] decreasing) would pass even if the
+    real emit_transfer silently failed, so it is not sufficient on its own.
+    """
+    client = get_gl_client()
+    accounts = get_accounts()
+    owner = accounts[0].address
 
+    contract = deploy_riftcover()
     write(contract, "create_pool", "Withdraw Test Pool", "[]")
     pool_id = read(contract, "list_pool_ids")[0]
     write(contract, "deposit_pool_capital", pool_id, value=10_000)
+
+    balance_before = client.get_balance(owner)
 
     withdraw_result = write(contract, "withdraw_available_capital", pool_id, 4_000)
     assert tx_execution_succeeded(withdraw_result)
 
     pool = read(contract, "get_pool", pool_id)
     assert pool["total_capital"] == 6_000
+
+    balance_after = client.get_balance(owner)
+    assert balance_after > balance_before
 
 
 def test_withdraw_rejects_amount_over_available_capital():

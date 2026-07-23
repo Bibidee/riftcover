@@ -97,7 +97,7 @@ Frontend production build: **succeeded** (`next build`, see above). No contract
 
 ## Deployment address
 
-**Current:** `0x309ac7f09d73bD603eDc55D793829165A1BE7186` on StudioNet (chain id
+**Current:** `0xc98EECD91d051C2143041F3a1D793D436591C67B` on StudioNet (chain id
 61999) — ASCII-clean source, fully-payable with balance-invariant checks, and the
 honest `_now()` (raises rather than calling the nonexistent `gl.message.datetime`).
 

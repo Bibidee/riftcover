@@ -4,11 +4,11 @@ Live state of the deployed contract at the time this was written (checked direct
 not assumed):
 
 ```
-Contract:  0x309ac7f09d73bD603eDc55D793829165A1BE7186   (StudioNet, chain 61999)
+Contract:  0xc98EECD91d051C2143041F3a1D793D436591C67B   (StudioNet, chain 61999)
 Admin:     0xEA8c474cED58DB2750F21a797636a64FeF39297d
 Treasury:  0xEA8c474cED58DB2750F21a797636a64FeF39297d
-Pools:     ['pool_000001']  -- "Atlas API Underwriters", 999,000 total capital
-Templates: []               -- none created yet
+Pools:     []  -- fresh deployment, none created yet
+Templates: []  -- none created yet
 Policies:  []
 Claims:    []
 ```
@@ -60,24 +60,28 @@ be connected as the admin account: `0xEA8c474cED58DB2750F21a797636a64FeF39297d`.
 
 ## 3. Pools (`/pools` and `/pools/pool_000001`)
 
+This is a fresh deployment (`0xc98EECD91d051C2143041F3a1D793D436591C67B`) with
+zero pools, so start by creating one.
+
 ### `/pools`
-- You should see exactly one row: **Atlas API Underwriters**, `pool_000001`, with
-  a capital gauge showing `0% reserved`, `0 / 999,000`.
-- Try creating a second pool: type a name (e.g. `Test Pool 2`), click **Create
-  Pool**. Watch it appear in the list after finalization. This is a real
+- Should show **"No pools yet."**
+- Type a name (e.g. `Atlas API Underwriters`), click **Create Pool**. Watch it
+  appear in the list as `pool_000001` after finalization. This is a real
   transaction — no payable value attached (pool creation itself is free; capital
   comes later via deposit).
 
 ### `/pools/pool_000001`
-- Confirm: Owner = `0x4A7D76b8C4668a3426d6d54eC24b41Fa87b532f5` (or whichever
-  wallet created it), Paid out = `0`, Active = `true`.
-- **Deposit test:** enter `1000` in the Deposit field, click **Deposit**. This is
-  a real payable GEN transaction (`@gl.public.write.payable`) — your wallet will
-  prompt to sign. Wait for the transaction rail to reach FINALIZED, then confirm
-  the gauge updates total capital by +1000.
+- Confirm: Owner = your connected wallet address, Paid out = `0 GEN`, Active = `true`.
+- **Deposit test:** enter `1000` (GEN, decimal strings accepted, e.g. `1.25`) in
+  the Deposit field, click **Deposit**. This is a real payable GEN transaction
+  (`@gl.public.write.payable`) — your wallet will prompt to sign. Wait for the
+  transaction rail to reach FINALIZED, then confirm the gauge updates total
+  capital by +1000 GEN.
 - **Withdraw test:** enter `500` in the Withdraw field, click **Withdraw**. This
-  emits a real `emit_transfer` back to your wallet, guarded by a balance-invariant
-  check in the contract. Confirm total capital drops by 500.
+  calls `_send_gen`, which emits a real `_Recipient(Address).emit_transfer(value=...)`
+  back to your wallet (the same accepted transfer pattern used by p2pstake and
+  shipbond), guarded by a balance-invariant check in the contract. Confirm total
+  capital drops by 500 GEN, and check your wallet's real balance increased.
 - **Negative test:** try withdrawing more than the available (unreserved) capital
   — it should fail cleanly with `EXPECTED: withdrawal exceeds available...`, not
   crash or silently do nothing.

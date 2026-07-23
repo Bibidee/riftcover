@@ -1,6 +1,6 @@
 # Manual Smoke Test — Real Data, Real Flow
 
-Target contract: `0x309ac7f09d73bD603eDc55D793829165A1BE7186` on StudioNet.
+Target contract: `0xc98EECD91d051C2143041F3a1D793D436591C67B` on StudioNet.
 Confirmed live (via a direct read): `admin = treasury = 0xEA8c474cED58DB2750F21a797636a64FeF39297d`.
 
 **You must connect the wallet that controls `0xEA8c474cED58DB2750F21a797636a64FeF39297d`**
@@ -28,7 +28,7 @@ layout bug is fixed).
 
 There is currently no frontend page for `create_policy_template` (admin-only, not
 exposed in the builder UI). Do this once via the Studio UI's "Run and Debug" panel
-directly against `0x309ac7f09d73bD603eDc55D793829165A1BE7186`, using the admin
+directly against `0xc98EECD91d051C2143041F3a1D793D436591C67B`, using the admin
 account (`0xEA8c474cED58DB2750F21a797636a64FeF39297d`):
 
 **Method:** `create_policy_template`
